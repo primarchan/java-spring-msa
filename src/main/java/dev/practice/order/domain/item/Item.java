@@ -2,10 +2,13 @@ package dev.practice.order.domain.item;
 
 import com.google.common.collect.Lists;
 import dev.practice.order.common.exception.InvalidParamException;
+import dev.practice.order.common.util.TokenGenerator;
 import dev.practice.order.domain.AbstractEntity;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.persistence.*;
 import java.util.List;
@@ -14,6 +17,8 @@ import java.util.List;
 @Entity
 @NoArgsConstructor
 public class Item extends AbstractEntity {
+
+    private static final String PREFIX_ITEM = "iem_";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -27,7 +32,7 @@ public class Item extends AbstractEntity {
 
     private Long itemPrice;
 
-    @OneToMany(fetch = FetchType.LAZY, cascade = CascadeType.PERSIST)
+    @OneToMany(fetch = FetchType.LAZY, mappedBy = "item", cascade = CascadeType.PERSIST)
     private List<ItemOptionGroup> itemOptionGroupList = Lists.newArrayList();
 
     @Enumerated(EnumType.STRING)
@@ -43,6 +48,19 @@ public class Item extends AbstractEntity {
         END_OF_SALES("판매종료");
 
         private final String description;
+    }
+
+    @Builder
+    public Item(Long partnerId, String itemName, Long itemPrice) {
+        if (partnerId == null) throw new InvalidParamException();
+        if (StringUtils.isEmpty(itemName)) throw new InvalidParamException();
+        if (itemPrice == null) throw new InvalidParamException();
+
+        this.itemToken = TokenGenerator.randomCharacterWithPrefix(PREFIX_ITEM);
+        this.partnerId = partnerId;
+        this.itemName = itemName;
+        this.itemPrice = itemPrice;
+        this.status = Status.PREPARE;
     }
 
     public void changePrepare() {
